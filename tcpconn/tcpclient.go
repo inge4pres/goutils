@@ -69,6 +69,7 @@ func (comm *TCPCommand) ReceiveResp(conn *net.TCPConn) (data *TCPExData, ex erro
 			dt<-buf
 		}
 	}()
+	ex = <-errCh
 	resp.Write(<-dt)
 	ex = json.Unmarshal(resp.Bytes(), data)
 	return
