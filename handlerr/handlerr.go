@@ -3,6 +3,7 @@ package hendlerr
 import (
 	"log"
 	"os"
+	"errors"
 )
 
 type Herr struct {
