@@ -46,7 +46,7 @@ func handleConnection(conn *net.TCPConn) (ex error){
 			return
 		}
 	}()
-	buf := <- message
+	buf := <-message
 	phase, err := handlePhase(conn, buf)
 	if(!errorHandler(err)){
 		fmt.Fprintf(os.Stdout, "There was an error communicating during phase %d connecting with %s", phase, conn.RemoteAddr().String())
@@ -61,5 +61,6 @@ func handleConnection(conn *net.TCPConn) (ex error){
 func handlePhase(conn *net.TCPConn, buf []byte) (phase string, ex error){
 	phase = string(buf)
 	fmt.Fprintf(os.Stdout, "PHASE_RECV: %s\n", phase)
+	conn.Write([]byte(RESP_OK))
 	return
 }

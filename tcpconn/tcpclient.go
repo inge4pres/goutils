@@ -9,13 +9,12 @@ import (
 	"bytes"
 )
 
-//TODO Add IPv6 support
 /*
-Connect4: starts a IPv4 connection with a remote server, leaves it open for future use 
+Connect: starts a IPv4 connection with a remote server with protocol Command.Proto, leaves it open for future use 
 */
-func (comm *TCPCommand) Connect4() (conn *net.TCPConn, ex error) {
-	addr, _ := net.ResolveTCPAddr("tcp4", comm.RHost+":"+comm.RPort)
-	conn, ex = net.DialTCP("tcp", nil, addr)
+func (comm *TCPCommand) Connect() (conn *net.TCPConn, ex error) {
+	addr, _ := net.ResolveTCPAddr(comm.Proto, comm.RHost+":"+comm.RPort)
+	conn, ex = net.DialTCP(comm.Proto, nil, addr)
 	if (ex != nil){
 		fmt.Fprintf(os.Stdout, "Error during the connection to server %si:%s", comm.RHost, comm.RPort)
 		fmt.Fprintf(os.Stdout, "Error is %T\n%s", ex, ex)
