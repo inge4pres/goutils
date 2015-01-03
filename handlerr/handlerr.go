@@ -3,12 +3,21 @@ package hendlerr
 import (
 	"log"
 	"os"
-	"errors"
 )
 
 type Herr struct {
 	LogFile, Level, Descr string
 	Err            error
+}
+
+func IsErr(err error) error {
+	    return err
+}
+
+func (e *Herr) HandlErr (level, descr string, err error) {
+	e.Err = err
+        e.Level = level
+        e.LogErr()
 }
 
 func (e *Herr) LogErr() {
