@@ -9,7 +9,7 @@ import (
 	"errors"
 )
 
-var e = ex.Herr{LogFile: "./tcpserver.err"}
+var e = ex.Herr{LogFile: "./tcpconnection.err"}
 
 func TcpServerListener(conntype, host, port string) error {
 	addr, _ := net.ResolveTCPAddr(conntype, host+":"+port)
@@ -23,7 +23,7 @@ func TcpServerListener(conntype, host, port string) error {
 	}
 	for {
 		conn, err := l.AcceptTCP()
-		if ex.IsErr != nil {
+		if err != nil {
 			e.HandlErr("WARN", "", err)
 			return err
 		}
@@ -33,8 +33,11 @@ func TcpServerListener(conntype, host, port string) error {
 
 func handleConnection(conn *net.TCPConn) {
 	comm, err := StartConn(conn)
-	//TODO The rest of protocol specification
+//TODO The rest of protocol specification
+	if err != nil {
 	fmt.Fprintf(os.Stdout, "Error during connection!\n%T\n%s\nClient info:\n%s\n%s", err, err, comm.LAddr, comm.LHost)
+		}
+	fmt.Fprintf(os.Stdout, "Received command:\nPhase:"+string(comm.Phase)+"\nOS:"+comm.OS+"\nRaddr"+comm.RAddr)
 }
 
 func StartConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
@@ -55,7 +58,7 @@ func StartConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
 		e.HandlErr("WARN", "This request generateed an error!\n"+string(buf), err)
 	}
 	json.Unmarshal(buf, comm)
-	err = startHandShake(conn, comm.Phase)
+	err = startHandShake(conn, comm)
 	if err != nil {
 		e.HandlErr("WARN", "There was an error communicating during phase "+string(comm.Phase)+" connecting with "+conn.RemoteAddr().String()+"\n", err)
 	}
@@ -64,8 +67,8 @@ func StartConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
 */	return comm, err
 }
 
-func startHandShake(conn *net.TCPConn, phase int) error {
-	if phase == PHASE_CONN {
+func startHandShake(conn *net.TCPConn, comm *TCPCommand) error {
+	if comm.Phase == PHASE_CONN {
 		conn.Write([]byte(RESP_OK))
 		return nil
 	}
