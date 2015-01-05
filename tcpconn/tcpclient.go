@@ -3,24 +3,18 @@ package tcpconn
 import (
 	"bytes"
 	json "encoding/json"
-	"errors"
-	"fmt"
 	"net"
-	"os"
 )
-
 /*
 Connect: starts a IPv4 connection with a remote server with protocol Command.Proto, leaves it open for future use
 */
-func (comm *TCPCommand) Connect() (conn *net.TCPConn, ex error) {
-	addr, _ := net.ResolveTCPAddr(comm.Proto, comm.RHost+":"+comm.RPort)
-	conn, ex = net.DialTCP(comm.Proto, nil, addr)
-	if ex != nil {
-		fmt.Fprintf(os.Stdout, "Error during the connection to server %si:%s", comm.RHost, comm.RPort)
-		fmt.Fprintf(os.Stdout, "Error is %T\n%s", ex, ex)
-		os.Exit(1)
+func (comm *TCPCommand) Connect() (conn *net.TCPConn, err error) {
+	addr, err := net.ResolveTCPAddr(comm.Proto, comm.RAddr+":"+comm.RPort)
+	conn, err = net.DialTCP(comm.Proto, nil, addr)
+	if err != nil {
+		e.HandlErr("FATAL ", "Could not reach the remote server at "+comm.RAddr+":"+comm.RPort+"\n", err)
 	}
-	return
+	return conn, err
 }
 
 /*
@@ -33,58 +27,63 @@ func (comm *TCPCommand) Disconnect(conn *net.TCPConn) {
 /*
 PostCommand: send a command on a previously opened connection; command is json-encoded; returns the response in a TcpExData interface
 */
-func (comm *TCPCommand) PostCommand(conn *net.TCPConn) (ex error) {
-	var init string
+func (comm *TCPCommand) PostCommand(conn *net.TCPConn) error {
+/*	var init string
 	conn.Write([]byte(START_COMM))
 	buf := make([]byte, MAX_COMM_SIZE)
 
 	_, err := conn.Read(buf)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "Error reading from buffer of TCP Connection\n%T\n%s\n", err, err)
-		ex = err
-		return
+		e.HandlErr("WARN ", "The server is not able to negotiate a connection\n", err)
+		return err
 	}
 	init = string(buf)
 	if init == RESP_OK {
-		jenc, _ := json.Marshal(comm)
-		conn.Write([]byte(jenc))
+*/
+	jc, err := json.Marshal(comm)
+	if err == nil {
+		conn.Write(jc)
 	} else {
-		ex = errors.New("Command was not accepted by remote server")
+		//err = errors.New("Command was not accepted by remote server")
+		e.HandlErr("FATAL", "Could not post command: json.Marshal() failed", err)
 	}
-	return ex
+	return err
 }
 
 /*
 ReceiveResp: receive the response from the remote server
 */
-func (comm *TCPCommand) ReceiveResp(conn *net.TCPConn) (data *TCPExData, ex error) {
+func (comm *TCPCommand) ReceiveResp(conn *net.TCPConn) (data *TCPExData, err error) {
 	dt := make(chan []byte)
 	errCh := make(chan error)
 	var resp bytes.Buffer
-	go func() {
-		for {
-			buf := make([]byte, MAX_BUFF_SIZE)
-			_, err := conn.Read(buf)
-			if err != nil {
-				errCh <- err
-			}
-			dt <- buf
+	for {
+		buf := make([]byte, MAX_BUFF_SIZE)
+		_, err := conn.Read(buf)
+		if err != nil {
+			errCh <- err
 		}
-	}()
-	ex = <-errCh
+		dt <- buf
+	}
+	err = <-errCh
+	if err != nil{
+		e.HandlErr("WARN", "Error reading the response from remote server", err)
+	}
 	resp.Write(<-dt)
-	ex = json.Unmarshal(resp.Bytes(), data)
+	err = json.Unmarshal(resp.Bytes(), data)
+	conn.Close()
 	return
 }
 
 /*
 SendData: send data on a previously opened connection; data is json-encoded
 */
-func (data *TCPExData) SendData(conn *net.TCPConn) (ex error) {
-	_, err := json.Marshal(data.Data)
+func (data *TCPExData) SendData(conn *net.TCPConn) error {
+	denc, err := json.Marshal(data.Data)
 	if err != nil {
-		ex = err
+		e.HandlErr("WARN", "The data format is incorrect!", err)
+		return err
 	}
-	//TODO
-	return
+	conn.Write(denc)
+	return err
 }
