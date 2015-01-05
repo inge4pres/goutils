@@ -17,7 +17,7 @@ const (
 )
 
 type TCPCommand struct {
-        OS, RHost, RPort, Proto string
+        OS, LHost, LAddr, RAddr, RPort, Proto string
         Phase int
 }
 
