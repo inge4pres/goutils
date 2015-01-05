@@ -28,18 +28,6 @@ func (comm *TCPCommand) Disconnect(conn *net.TCPConn) {
 PostCommand: send a command on a previously opened connection; command is json-encoded; returns the response in a TcpExData interface
 */
 func (comm *TCPCommand) PostCommand(conn *net.TCPConn) error {
-/*	var init string
-	conn.Write([]byte(START_COMM))
-	buf := make([]byte, MAX_COMM_SIZE)
-
-	_, err := conn.Read(buf)
-	if err != nil {
-		e.HandlErr("WARN ", "The server is not able to negotiate a connection\n", err)
-		return err
-	}
-	init = string(buf)
-	if init == RESP_OK {
-*/
 	jc, err := json.Marshal(comm)
 	if err == nil {
 		conn.Write(jc)
