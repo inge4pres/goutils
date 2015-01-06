@@ -8,9 +8,15 @@ import (
 	json "encoding/json"
 	"errors"
 )
-
+/*
+Declared global logfile
+*/
 var e = ex.Herr{LogFile: "./tcpconnection.err"}
 
+/*
+Main function called from other referenced packages and main; it opens the socket and listen for clients.
+Should be extended in "handleConnection" to have a full protocol implementation
+*/
 func TcpServerListener(conntype, host, port string) error {
 	addr, _ := net.ResolveTCPAddr(conntype, host+":"+port)
 	l, err := net.ListenTCP(conntype, addr)
@@ -32,42 +38,41 @@ func TcpServerListener(conntype, host, port string) error {
 }
 
 func handleConnection(conn *net.TCPConn) {
-	comm, err := StartConn(conn)
-//TODO The rest of protocol specification
+	comm, err := startConn(conn)
 	if err != nil {
-	fmt.Fprintf(os.Stdout, "Error during connection!\n%T\n%s\nClient info:\n%s\n%s", err, err, comm.LAddr, comm.LHost)
-		}
-	fmt.Fprintf(os.Stdout, "Received command:\nPhase:"+string(comm.Phase)+"\nOS:"+comm.OS+"\nRaddr"+comm.RAddr)
+		e.HandlErr("WARN ","Error initiating the connection!", err)
+	}
+	err = initHandShake(conn, comm)
+	if err != nil {
+		e.HandlErr("WARN ", "Phase "+string(comm.Phase)+" ent WRONG!", err)
+	}
 }
 
-func StartConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
+func startConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
 	var message = make(chan []byte, WRKR_COUNT)
 	var erCh = make(chan error)
-	for {
+	go func(){
 		read := make([]byte, MAX_COMM_SIZE)
 		b, err := conn.Read(read)
-		message<-read
+		message<-read[0:b]
 		erCh<-err
-		if b == 0 {
-			break
-		}
-	}
+	}()
 	buf := <-message
 	err := <-erCh
 	if err != nil {
-		e.HandlErr("WARN", "This request generateed an error!\n"+string(buf), err)
+		e.HandlErr("WARN", "This request generated an error!\n"+string(buf), err)
 	}
-	json.Unmarshal(buf, comm)
-	err = startHandShake(conn, comm)
+	comm = &TCPCommand{}
+	err = json.Unmarshal(buf, comm)
 	if err != nil {
-		e.HandlErr("WARN", "There was an error communicating during phase "+string(comm.Phase)+" connecting with "+conn.RemoteAddr().String()+"\n", err)
+		e.HandlErr("WARN ", "Could not understand the received command!", err)
 	}
 /*	Implements only the initial handshake
 	Managing the rest of portocol after handshake must be done in specific way
 */	return comm, err
 }
 
-func startHandShake(conn *net.TCPConn, comm *TCPCommand) error {
+func initHandShake(conn *net.TCPConn, comm *TCPCommand) error {
 	if comm.Phase == PHASE_CONN {
 		conn.Write([]byte(RESP_OK))
 		return nil
