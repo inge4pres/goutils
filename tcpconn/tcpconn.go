@@ -10,7 +10,7 @@ const (
         MAX_FILE_SIZE = 10485760  //10MB 
         MAX_BUFF_SIZE = 32768     //32KB
         WRKR_COUNT = 100          //Max number of workers for concurrency
-        MAX_COMM_SIZE = 2048      //Max size of Commands
+        MAX_COMM_SIZE = 2048      //Max size of Commands JSON encoded
 
 	RESP_OK = "OK"            //Default initial response, used for connectivity validation
 	START_COMM = "INIT"       //Default initial request, used or connection validation
