@@ -32,7 +32,6 @@ func (comm *TCPCommand) PostCommand(conn *net.TCPConn) error {
 	if err == nil {
 		conn.Write(jc)
 	} else {
-		//err = errors.New("Command was not accepted by remote server")
 		e.HandlErr("FATAL", "Could not post command: json.Marshal() failed", err)
 	}
 	return err
@@ -45,19 +44,20 @@ func (comm *TCPCommand) ReceiveResp(conn *net.TCPConn) (data *TCPExData, err err
 	dt := make(chan []byte)
 	errCh := make(chan error)
 	var resp bytes.Buffer
-	for {
+	go func(){
 		buf := make([]byte, MAX_BUFF_SIZE)
-		_, err := conn.Read(buf)
+		b, err := conn.Read(buf)
 		if err != nil {
 			errCh <- err
 		}
-		dt <- buf
-	}
+		dt <- buf[0:b]
+	}()
 	err = <-errCh
 	if err != nil{
 		e.HandlErr("WARN", "Error reading the response from remote server", err)
 	}
 	resp.Write(<-dt)
+	data = &TCPExData{}
 	err = json.Unmarshal(resp.Bytes(), data)
 	conn.Close()
 	return
