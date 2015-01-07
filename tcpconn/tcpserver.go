@@ -42,9 +42,11 @@ func handleConnection(conn *net.TCPConn) {
 	if err != nil {
 		e.HandlErr("WARN ","Error initiating the connection!", err)
 	}
+	fmt.Println("Got this command: ")
+        fmt.Println(comm)
 	err = initHandShake(conn, comm)
 	if err != nil {
-		e.HandlErr("WARN ", "Phase "+string(comm.Phase)+" ent WRONG!", err)
+		e.HandlErr("WARN ", "Phase "+string(comm.Phase)+" went WRONG!", err)
 	}
 }
 
