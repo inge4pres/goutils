@@ -1,8 +1,5 @@
 package tcpconn
 
-import (
-	"runtime"
-	)
 const (
         PHASE_CONN = 0 //Initial connection verification
         PHASE_AUTH = 1 //Authentication between client and server
@@ -26,11 +23,4 @@ type TCPCommand struct {
 
 type TCPExData struct {
 	Data map[string]interface{}
-}
-
-/*
-init the TCPCOmmand type
-*/
-func init() {
-	
 }
