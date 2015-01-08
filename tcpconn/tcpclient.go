@@ -4,6 +4,7 @@ import (
 	"bytes"
 	json "encoding/json"
 	"net"
+	"fmt"
 )
 /*
 Connect: starts a IPv4 connection with a remote server with protocol Command.Proto, leaves it open for future use
@@ -41,25 +42,17 @@ func (comm *TCPCommand) PostCommand(conn *net.TCPConn) error {
 ReceiveResp: receive the response from the remote server
 */
 func (comm *TCPCommand) ReceiveResp(conn *net.TCPConn) (data *TCPExData, err error) {
-	dt := make(chan []byte)
-	errCh := make(chan error)
 	var resp bytes.Buffer
-	go func(){
-		buf := make([]byte, MAX_BUFF_SIZE)
-		b, err := conn.Read(buf)
-		if err != nil {
-			errCh <- err
-		}
-		dt <- buf[0:b]
-	}()
-	err = <-errCh
+	buf := make([]byte, MAX_BUFF_SIZE)
+	b, err := conn.Read(buf)
+	fmt.Printf("READ %d bytes from connection\n", b)
 	if err != nil{
 		e.HandlErr("WARN", "Error reading the response from remote server", err)
 	}
-	resp.Write(<-dt)
+	resp.Write(buf[0:b])
+	fmt.Println("GOT this data as RESP:"+resp.String())
 	data = &TCPExData{}
 	err = json.Unmarshal(resp.Bytes(), data)
-	conn.Close()
 	return
 }
 

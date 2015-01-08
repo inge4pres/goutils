@@ -30,7 +30,7 @@ func TcpServerListener(conntype, host, port string) error {
 	for {
 		conn, err := l.AcceptTCP()
 		if err != nil {
-			e.HandlErr("WARN", "", err)
+			e.HandlErr("WARN ", "Could not start the server", err)
 			return err
 		}
 		go handleConnection(conn)
@@ -42,12 +42,15 @@ func handleConnection(conn *net.TCPConn) {
 	if err != nil {
 		e.HandlErr("WARN ","Error initiating the connection!", err)
 	}
-	fmt.Println("Got this command: ")
-        fmt.Println(comm)
 	err = initHandShake(conn, comm)
 	if err != nil {
 		e.HandlErr("WARN ", "Phase "+string(comm.Phase)+" went WRONG!", err)
 	}
+	err, resp := execCommand(comm)
+	if err != nil {
+		e.HandlErr("WARN ", "Command execution failed...", err)
+	}
+	fmt.Println("RESPONSE GENERATED: "+string(resp))
 }
 
 func startConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
@@ -62,7 +65,7 @@ func startConn(conn *net.TCPConn) (comm *TCPCommand, ex error) {
 	buf := <-message
 	err := <-erCh
 	if err != nil {
-		e.HandlErr("WARN", "This request generated an error!\n"+string(buf), err)
+		e.HandlErr("WARN ", "This request generated an error!\n"+string(buf), err)
 	}
 	comm = &TCPCommand{}
 	err = json.Unmarshal(buf, comm)
@@ -80,4 +83,9 @@ func initHandShake(conn *net.TCPConn, comm *TCPCommand) error {
 		return nil
 	}
 	return errors.New("Could not start handshake with client, protocol phase mismatch")
+}
+
+func execCommand(comm *TCPCommand) (err error, resp []byte) {
+	//TODO choose waht to do with the command received
+	return nil, []byte(RESP_OK)
 }
