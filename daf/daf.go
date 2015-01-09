@@ -18,6 +18,6 @@ type Daf struct {
 }
 
 type MySqlDaf interface {
-	Db 		Daf
+	Db 	Daf
 	Conn	sql.Open(DRVM, Db.User+":"Db.Pwd+"@"+Db.Protocol+"("+Db.Host+":"+Db.Port+")"+"/"+Db.Dbname) 
 }
