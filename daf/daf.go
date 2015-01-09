@@ -17,7 +17,15 @@ type Daf struct {
 	Dbname, Host, Pwd, Port, Protocol, User string
 }
 
-type MySqlDaf interface {
-	Db 	Daf
-	Conn	sql.Open(DRVM, Db.User+":"Db.Pwd+"@"+Db.Protocol+"("+Db.Host+":"+Db.Port+")"+"/"+Db.Dbname) 
+type MySqlDaf struct {
+	DbInfo	Daf
+	Conn	*sql.DB
+}
+
+func (mdb *MySqlDaf) ConnectTo() (err error) {
+	myDaf := mdb.DbInfo
+	mdb.Conn, err = sql.Open(DRVM, myDaf.User+":"+myDaf.Pwd+"@"+myDaf.Protocol+"("+myDaf.Host+":"+myDaf.Port+")"+"/"+myDaf.Dbname)
+	if err!= nil {
+		return err
+	}
 }
